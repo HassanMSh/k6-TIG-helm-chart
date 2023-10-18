@@ -1,0 +1,38 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: k6
+spec:
+  selector:
+    matchLabels:
+      app: k6
+  template:
+    metadata:
+      labels:
+        app: k6
+    spec:
+      containers:
+        - image: grafana/k6:0.45.0
+          name: k6
+          command:
+            - /bin/sh
+            - "-c"
+            - {{ .Values.k6.command | default "k6 run --out statsd /scripts/script.js --insecure-skip-tls-verify" }}
+          env:
+            - name: K6_STATSD_ENABLE_TAGS
+              value: "{{ .Values.k6.statsd.enableTags | default "true" }}"
+            - name: K6_STATSD_PUSH_INTERVAL
+              value: "{{ .Values.k6.statsd.pushInterval | default "100ms" }}"
+            - name: K6_STATSD_ADDR
+              value: "{{ .Values.k6.statsd.statsdAddressAndPort | default "telegraf.central:8125" }}"
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: k6-script

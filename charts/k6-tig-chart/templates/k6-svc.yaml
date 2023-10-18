@@ -1,0 +1,17 @@
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels: 
+    app: k6
+  name: k6
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+  - port: 6565
+    protocol: TCP
+    targetPort: 6565
+  selector:
+    app: k6
+  type: {{ .Values.k6.service | default "ClusterIP" }}

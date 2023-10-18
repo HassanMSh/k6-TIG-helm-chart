@@ -1,0 +1,88 @@
+# Default values for k6-tig-chart.
+# This is a YAML-formatted file.
+# The following configuration will work without any changes. The only change you might need
+# is to change the service for each component to fit your cluster.  
+
+## It is expected that you have a running kubernetes cluster and helm installed with an avaialble Grafana dashboard.
+
+## replicaCount is the number of replicas to deploy for influxdb component.
+replicaCount: 1
+
+## influxdb default configuration, leave as is if you don't know what you are doing
+influxdb:
+  ## influxdb admin user and password
+  adminUser: admin
+  adminPassword: password
+  ## influxdb database
+  db: monitoring
+  host: influxdb
+  httpAuthEnabled: true
+  readUser: read_only
+  ## inflxudb user and password for grafana datasrouce connection
+  user: user
+  userPassword: password
+  ## influxdb service, ClusterIP || NodePort || LoadBalancer
+  service:
+    type: ClusterIP
+
+## k6 default configuration
+k6:
+  command: k6 run --out statsd /scripts/script.js --insecure-skip-tls-verify --vus 1 --duration 1m --no-summary
+  service: ClusterIP
+  statsd:
+    enableTags: true
+    pushInterval: 100ms
+    ## telegraf address and port 
+    statsdAddressAndPort: telegraf.central:8125
+  script: |+
+    import http from "k6/http";
+    import { check } from "k6";
+    export default function() {
+      let res = http.get("https://test.k6.io");
+      check(res, {
+        "is status 200": (r) => r.status === 200
+      });
+    }
+## telegraf default configuration
+telegraf:
+  service: ClusterIP
+  ## telegraf configuration, leave as is if you don't know what you are doing 
+  config: |+
+    [agent]
+      interval = "10s"
+      round_interval = true
+      metric_batch_size = 1000
+      metric_buffer_limit = 10000
+      collection_jitter = "0s"
+      flush_interval = "10s"
+      flush_jitter = "0s"
+      precision = ""
+      quiet = false
+      hostname = ""
+      omit_hostname = false
+
+    [[outputs.influxdb]]
+      urls = ["http://$INFLUXDB_HOST:8086/"]
+      skip_database_creation = true
+      database = "$INFLUXDB_DB"
+      username = "$INFLUXDB_USER"
+      password = "$INFLUXDB_USER_PASSWORD"
+      timeout = "5s"
+      write_consistency = "any"
+      retention_policy = ""
+
+    [[inputs.statsd]]
+       protocol = "udp"
+       max_tcp_connections = 250
+       tcp_keep_alive = false
+       service_address = ":8125"
+       delete_gauges = true
+       delete_counters = true
+       delete_sets = true
+       delete_timings = true
+       metric_separator = ","
+       allowed_pending_messages = 100000
+       percentile_limit = 10000
+       read_buffer_size = 65535
+       datadog_extensions = true
+       percentiles = [90.0, 95.0, 99.0]

@@ -1,0 +1,16 @@
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegraf
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: {{ .Values.telegraf.service | default "ClusterIP" }}
+  selector:
+    app: telegraf
+  ports:
+    - name: udp
+      protocol: UDP
+      port: 8125
+      targetPort: 8125

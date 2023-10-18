@@ -1,0 +1,10 @@
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-script
+  namespace: {{ .Release.Namespace }}
+data:
+  script.js: |+
+    {{ .Values.k6.script | nindent 4}}

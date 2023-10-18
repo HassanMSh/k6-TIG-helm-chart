@@ -1,0 +1,11 @@
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telegraf-config
+  namespace: {{ .Release.Namespace }}
+data:
+  telegraf.conf: |+
+    ## telegraf config goes here 
+    {{ .Values.telegraf.config | indent 4}}

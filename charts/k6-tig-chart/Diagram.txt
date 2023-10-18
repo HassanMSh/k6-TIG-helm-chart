@@ -1,0 +1,45 @@
+@startuml k6
+!theme cerulean
+actor User
+participant k6
+participant Telegraf
+participant StatsD
+participant InfluxDB
+participant Grafana
+
+== Testing ==
+User -> k6: Run Test
+
+k6 -> Telegraf: Send metrics
+activate Telegraf
+
+Telegraf --> StatsD: Forward metrics
+activate StatsD
+StatsD --> StatsD: Aggregate metrics
+StatsD --> Telegraf: Forward aggregated metrics
+deactivate StatsD
+
+Telegraf -> InfluxDB: Sends metrics
+deactivate Telegraf
+
+activate InfluxDB
+InfluxDB --> InfluxDB: Store data
+InfluxDB -[hidden]-> InfluxDB
+deactivate InfluxDB
+
+== Reading Results ==
+
+User -> Grafana: Requests Displaying Metrics
+
+activate Grafana
+
+Grafana -> InfluxDB: Query data for visualization
+activate InfluxDB
+InfluxDB -> Grafana
+
+deactivate InfluxDB
+
+Grafana -> User: Displays Metrics
+
+deactivate Grafana
+@enduml

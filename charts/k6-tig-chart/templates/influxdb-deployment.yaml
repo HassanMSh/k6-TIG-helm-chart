@@ -1,0 +1,25 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: influxdb
+  name: influxdb
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+      - envFrom:
+        - secretRef:
+            name: influxdb-creds
+        image: docker.io/influxdb:1.8
+        name: influxdb
